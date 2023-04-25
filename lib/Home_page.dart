@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:medical_bot/Suggestion_box.dart';
 import 'package:medical_bot/pallete.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import '';
 
 class Home_page extends StatefulWidget {
@@ -10,83 +12,141 @@ class Home_page extends StatefulWidget {
 }
 
 class _Home_pageState extends State<Home_page> {
+
+  final speechToText =SpeechToText();
+  String lastWords='';
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    initSpeech();
+  }
+  void initSpeech() async {
+    var speechEnabled = await speechToText.initialize();
+    setState(() {});
+  }
+
+  Future<void> startListening() async {
+    var onSpeechResult;
+    await speechToText.listen(onResult: onSpeechResult);
+    setState(() {});
+  }
+
+  /// Manually stop the active speech recognition session
+  /// Note that there are also timeouts that each platform enforces
+  /// and the SpeechToText plugin supports setting timeouts on the
+  /// listen method.
+  Future<void> stopListening() async {
+    await speechToText.stop();
+    setState(() {});
+  }
+
+  /// This is the callback that the SpeechToText plugin calls when
+  /// the platform returns recognized words.
+  Future<void> onSpeechResult(SpeechRecognitionResult result) async {
+    setState(() {
+      lastWords = result.recognizedWords;
+    });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    speechToText.stop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Welcome to Your Health buddy'),
         leading: Icon(Icons.menu),
+
       ),
-      body: Column(
-        children: [
-          Stack(
-            children: [
-              Center(
-                child: Container(
-                  height: 120,
-                  width: 120,
-                  margin: EdgeInsets.only(top: 4),
-                  decoration: BoxDecoration(
-                    color:Pallete.assistantCircleColor,
-                    shape: BoxShape.circle,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                Center(
+                  child: Container(
+                    height: 120,
+                    width: 120,
+                    margin: EdgeInsets.only(top: 4),
+                    decoration: BoxDecoration(
+                      color:Pallete.assistantCircleColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
+                Container(
+                  height: 123,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    image:DecorationImage(image:AssetImage('assets/images/virtualAssistant.png'),),
+                  ),
+                ),
+              ],
+            ),
+            // chat bubble
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 10,
               ),
-              Container(
-                height: 123,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  image:DecorationImage(image:AssetImage('assets/images/virtualAssistant.png'),),
+              margin: const EdgeInsets.symmetric(horizontal: 40).copyWith(
+                top: 13
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Pallete.borderColor,
+                ),
+                borderRadius: BorderRadius.circular(20).copyWith(
+                  topLeft: Radius.zero,
+                )
+              ),
+              child: const Text('Good Morning How can I help You',style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              //  fontStyle: FontStyle.italic,
+                fontFamily: 'Cera Pro'
+              ),),
+            ),
+            Container(
+              padding: const EdgeInsets.all(10),
+              alignment: Alignment.centerLeft,
+              margin: const EdgeInsets.only(top: 10, left: 22),
+              child: const Text('Here is are few Suggestion',
+                style: TextStyle(color: Pallete.mainFontColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
-          ),
-          // chat bubble
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 10,
             ),
-            margin: const EdgeInsets.symmetric(horizontal: 40).copyWith(
-              top: 13
+            //  features List
+            Column(
+              children: const [
+                Suggestion_box(color: Pallete.firstSuggestionBoxColor, headerText: 'Chatgpt', discriptionText: 'A dev version',),
+                  Suggestion_box(color: Pallete.secondSuggestionBoxColor, headerText: 'headerText', discriptionText: 'discriptionText'),
+                    Suggestion_box(color: Pallete.thirdSuggestionBoxColor, headerText: 'third', discriptionText: 'discriptionText'),
+              ],
             ),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Pallete.borderColor,
-              ),
-              borderRadius: BorderRadius.circular(20).copyWith(
-                topLeft: Radius.zero,
-              )
-            ),
-            child: const Text('Good Morning How can I help You',style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-            //  fontStyle: FontStyle.italic,
-              fontFamily: 'Cera Pro'
-            ),),
-          ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            alignment: Alignment.centerLeft,
-            margin: const EdgeInsets.only(top: 10, left: 22),
-            child: const Text('Here is are few Suggestion',
-              style: TextStyle(color: Pallete.mainFontColor,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          //  features List
-          Column(
-            children: const [
-              Suggestion_box(color: Pallete.firstSuggestionBoxColor, headerText: 'Chatgpt', discriptionText: 'A dev version',),
-                Suggestion_box(color: Pallete.secondSuggestionBoxColor, headerText: 'headerText', discriptionText: 'discriptionText'),
-                  Suggestion_box(color: Pallete.thirdSuggestionBoxColor, headerText: 'third', discriptionText: 'discriptionText'),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton(onPressed: () {  },child: Icon(Icons.mic_none_outlined),) ,
+      floatingActionButton: FloatingActionButton(onPressed: () async {
+        if(await speechToText.hasPermission && speechToText.isNotListening){
+          startListening();
+        }
+        else if(speechToText.isListening)  {
+           await stopListening();
+        }
+        else{
+          initSpeech();
+        }
+      },child: Icon(Icons.mic_none),) ,
     );
   }
 }
