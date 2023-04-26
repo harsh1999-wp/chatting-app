@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:medical_bot/Suggestion_box.dart';
+import 'package:medical_bot/openai_service.dart';
 import 'package:medical_bot/pallete.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import '';
 
 class Home_page extends StatefulWidget {
 
@@ -15,7 +15,7 @@ class _Home_pageState extends State<Home_page> {
 
   final speechToText =SpeechToText();
   String lastWords='';
-
+  final openAIService =OpenAIService();
   @override
   void initState() {
     // TODO: implement initState
@@ -141,6 +141,7 @@ class _Home_pageState extends State<Home_page> {
           startListening();
         }
         else if(speechToText.isListening)  {
+          openAIService.isArtPromptAPI(lastWords);
            await stopListening();
         }
         else{
