@@ -10,7 +10,7 @@ class Suggestion_box extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-          margin: EdgeInsets.symmetric(
+          margin: const EdgeInsets.symmetric(
             horizontal: 25,
             vertical: 10,
           ),
@@ -26,17 +26,17 @@ class Suggestion_box extends StatelessWidget {
           children: [
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(headerText,style: TextStyle(
+              child: Text(headerText,style: const TextStyle(
                 fontFamily: 'Cera Pro',
                 color: Pallete.blackColor,
               ),
               ),
             ),
-            Text(discriptionText,style: TextStyle(
+            Text(discriptionText,style: const TextStyle(
               fontFamily: 'Cera Pro',
               color: Pallete.blackColor,
-            ),),
-
+            ),
+            ),
           ],
         ),
       ),

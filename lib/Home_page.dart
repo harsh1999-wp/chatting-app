@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:medical_bot/Suggestion_box.dart';
 import 'package:medical_bot/openai_service.dart';
 import 'package:medical_bot/pallete.dart';
@@ -14,14 +15,26 @@ class Home_page extends StatefulWidget {
 class _Home_pageState extends State<Home_page> {
 
   final speechToText =SpeechToText();
+  final FlutterTts flutterTts = FlutterTts();
   String lastWords='';
+  String? generateContent;
   final openAIService =OpenAIService();
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     initSpeech();
+    initTextToSpeech();
   }
+
+  Future<void> initTextToSpeech() async
+  {
+    await flutterTts.setSharedInstance(true);
+    setState(() {
+
+    });
+  }
+
   void initSpeech() async {
     var speechEnabled = await speechToText.initialize();
     setState(() {});
@@ -50,11 +63,17 @@ class _Home_pageState extends State<Home_page> {
     });
   }
 
+  Future<void> systemSpeak(String content) async
+  {
+    await flutterTts.speak(content);
+  }
+
   @override
   void dispose() {
     // TODO: implement dispose
     super.dispose();
     speechToText.stop();
+    flutterTts.stop();
   }
 
   @override
@@ -107,12 +126,15 @@ class _Home_pageState extends State<Home_page> {
                   topLeft: Radius.zero,
                 )
               ),
-              child: const Text('Good Morning How can I help You',style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-              //  fontStyle: FontStyle.italic,
-                fontFamily: 'Cera Pro'
-              ),),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 10.0),
+                child:  Text(generateContent == null ?'Good Morning How can I help You':generateContent!,style: TextStyle(
+                  fontSize: generateContent == null ? 30: 18,
+                  fontWeight: FontWeight.bold,
+                //  fontStyle: FontStyle.italic,
+                  fontFamily: 'Cera Pro'
+                ),),
+              ),
             ),
             Container(
               padding: const EdgeInsets.all(10),
@@ -128,8 +150,8 @@ class _Home_pageState extends State<Home_page> {
             //  features List
             Column(
               children: const [
-                Suggestion_box(color: Pallete.firstSuggestionBoxColor, headerText: 'Chatgpt', discriptionText: 'A dev version',),
-                  Suggestion_box(color: Pallete.secondSuggestionBoxColor, headerText: 'headerText', discriptionText: 'discriptionText'),
+                Suggestion_box(color: Pallete.firstSuggestionBoxColor, headerText: 'some health related query', discriptionText: 'A dev version',),
+                  Suggestion_box(color: Pallete.secondSuggestionBoxColor, headerText: 'some suggestion', discriptionText: 'discriptionText'),
                     Suggestion_box(color: Pallete.thirdSuggestionBoxColor, headerText: 'third', discriptionText: 'discriptionText'),
               ],
             ),
@@ -141,7 +163,15 @@ class _Home_pageState extends State<Home_page> {
           startListening();
         }
         else if(speechToText.isListening)  {
-          openAIService.isArtPromptAPI(lastWords);
+         final speech = await openAIService.isArtPromptAPI(lastWords);
+         if(speech.contains('https')){
+           generateContent =  speech;
+           setState(() {
+
+           });
+           await systemSpeak(speech);
+         }
+         await systemSpeak(speech);
            await stopListening();
         }
         else{
